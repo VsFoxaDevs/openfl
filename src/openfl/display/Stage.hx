@@ -1573,7 +1573,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 					clickEvent.localY = local.y;
 					clickEvent.target = sprite;
 					#else
-					var clickEvent = MouseEvent.__create(MouseEvent.CLICK, 0, __mouseX, __mouseY, sprite.__globalToLocal(targetPoint, localPoint), sprite);
+					var clickEvent = MouseEvent.__create(MouseEvent.CLICK, 0, 0, __mouseX, __mouseY, sprite.__globalToLocal(targetPoint, localPoint), sprite);
 					#end
 
 					__dispatchStack(clickEvent, stack);
@@ -2527,6 +2527,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 		if (target == null) target = this;
 
 		var clickType = null;
+		var supportsClickCount = false;
 
 		switch (type)
 		{
@@ -2565,12 +2566,15 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 
 				__mouseDownLeft = target;
 				MouseEvent.__buttonDown = true;
+				supportsClickCount = true;
 
 			case MouseEvent.MIDDLE_MOUSE_DOWN:
 				__mouseDownMiddle = target;
+				supportsClickCount = true;
 
 			case MouseEvent.RIGHT_MOUSE_DOWN:
 				__mouseDownRight = target;
+				supportsClickCount = true;
 
 			case MouseEvent.MOUSE_UP:
 				if (__mouseDownLeft != null)
@@ -2593,8 +2597,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 						event.localX = __mouseX;
 						event.localY = __mouseY;
 						event.target = this;
+						event.clickCount = 0;
 						#else
-						event = MouseEvent.__create(MouseEvent.RELEASE_OUTSIDE, 1, __mouseX, __mouseY, new Point(__mouseX, __mouseY), this);
+						event = MouseEvent.__create(MouseEvent.RELEASE_OUTSIDE, 1, 0, __mouseX, __mouseY, new Point(__mouseX, __mouseY), this);
 						#end
 
 						__mouseDownLeft.dispatchEvent(event);
@@ -2606,6 +2611,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 
 					__mouseDownLeft = null;
 				}
+				supportsClickCount = true;
 
 			case MouseEvent.MIDDLE_MOUSE_UP:
 				if (__mouseDownMiddle == target)
@@ -2614,6 +2620,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 				}
 
 				__mouseDownMiddle = null;
+				supportsClickCount = true;
 
 			case MouseEvent.RIGHT_MOUSE_UP:
 				if (__mouseDownRight == target)
@@ -2622,6 +2629,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 				}
 
 				__mouseDownRight = null;
+				supportsClickCount = true;
 
 			default:
 		}
@@ -2629,6 +2637,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 		var localPoint = Point.__pool.get();
 		var event:MouseEvent = null;
 
+		var clickCount = #if (lime >= "8.1.0") supportsClickCount ? window.clickCount : 0 #else 0 #end;
 		#if openfl_pool_events
 		event = MouseEvent.__pool.get();
 		event.type = type;
@@ -2638,8 +2647,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 		event.localX = local.x;
 		event.localY = local.y;
 		event.target = target;
+		event.clickCount = clickCount;
 		#else
-		event = MouseEvent.__create(type, button, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), target);
+		event = MouseEvent.__create(type, button, clickCount, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), target);
 		#end
 
 		__dispatchStack(event, stack);
@@ -2664,8 +2674,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 			event.localX = local.x;
 			event.localY = local.y;
 			event.target = target;
+			event.clickCount = 0;
 			#else
-			event = MouseEvent.__create(clickType, button, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), target);
+			event = MouseEvent.__create(clickType, button, 0, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), target);
 			#end
 
 			__dispatchStack(event, stack);
@@ -2693,8 +2704,10 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 					event.localX = local.x;
 					event.localY = local.y;
 					event.target = target;
+					event.clickCount = 0;
 					#else
-					event = MouseEvent.__create(MouseEvent.DOUBLE_CLICK, button, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), target);
+					event = MouseEvent.__create(MouseEvent.DOUBLE_CLICK, button, 0, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint),
+						target);
 					#end
 
 					__dispatchStack(event, stack);
@@ -2762,8 +2775,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 				event.localX = local.x;
 				event.localY = local.y;
 				event.target = __mouseOverTarget;
+				event.clickCount = 0;
 				#else
-				event = MouseEvent.__create(MouseEvent.MOUSE_OUT, button, __mouseX, __mouseY, __mouseOverTarget.__globalToLocal(targetPoint, localPoint),
+				event = MouseEvent.__create(MouseEvent.MOUSE_OUT, button, 0, __mouseX, __mouseY, __mouseOverTarget.__globalToLocal(targetPoint, localPoint),
 					cast __mouseOverTarget);
 				#end
 
@@ -2797,8 +2811,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 				event.localX = local.x;
 				event.localY = local.y;
 				event.target = item;
+				event.clickCount = 0;
 				#else
-				event = MouseEvent.__create(MouseEvent.ROLL_OUT, button, __mouseX, __mouseY, __mouseOverTarget.__globalToLocal(targetPoint, localPoint),
+				event = MouseEvent.__create(MouseEvent.ROLL_OUT, button, 0, __mouseX, __mouseY, __mouseOverTarget.__globalToLocal(targetPoint, localPoint),
 					cast item);
 				#end
 				event.bubbles = false;
@@ -2836,9 +2851,10 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 					mouseEvent.localY = local.y;
 					mouseEvent.target = item;
 					event = mouseEvent;
+					event.clickCount = 0;
 					#else
-					event = MouseEvent.__create(MouseEvent.ROLL_OVER, button, __mouseX, __mouseY, __mouseOverTarget.__globalToLocal(targetPoint, localPoint),
-						cast item);
+					event = MouseEvent.__create(MouseEvent.ROLL_OVER, button, 0, __mouseX, __mouseY,
+						__mouseOverTarget.__globalToLocal(targetPoint, localPoint), cast item);
 					#end
 					event.bubbles = false;
 
@@ -2875,8 +2891,9 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 				mouseEvent.localY = local.y;
 				mouseEvent.target = target;
 				event = mouseEvent;
+				event.clickCount = 0;
 				#else
-				event = MouseEvent.__create(MouseEvent.MOUSE_OVER, button, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), cast target);
+				event = MouseEvent.__create(MouseEvent.MOUSE_OVER, button, 0, __mouseX, __mouseY, target.__globalToLocal(targetPoint, localPoint), cast target);
 				#end
 
 				__dispatchStack(event, stack);
@@ -2956,7 +2973,7 @@ class Stage extends DisplayObjectContainer #if lime implements IModule #end
 		__displayMatrix.__transformInversePoint(targetPoint);
 		var delta = Std.int(deltaY);
 
-		var event = MouseEvent.__create(MouseEvent.MOUSE_WHEEL, 0, __mouseX, __mouseY, target.__globalToLocal(targetPoint, targetPoint), target, delta);
+		var event = MouseEvent.__create(MouseEvent.MOUSE_WHEEL, 0, 0, __mouseX, __mouseY, target.__globalToLocal(targetPoint, targetPoint), target, delta);
 		event.cancelable = true;
 		__dispatchStack(event, stack);
 		if (event.isDefaultPrevented()) window.onMouseWheel.cancel();

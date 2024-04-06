@@ -54,7 +54,7 @@ import lime.math.RGBA;
 @:fileXml('tags="haxe,release"')
 @:noDebug
 #end
-@:final class ColorMatrixFilter extends BitmapFilter
+class ColorMatrixFilter extends BitmapFilter
 {
 	@:noCompletion private static var __colorMatrixShader:ColorMatrixShader = new ColorMatrixShader();
 
